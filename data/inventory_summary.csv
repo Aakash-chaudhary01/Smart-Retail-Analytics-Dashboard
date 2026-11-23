@@ -1,0 +1,8 @@
+product,category,current_stock,reorder_point,lead_time_days,unit_cost,stock_status,stock_to_reorder_ratio
+Laptop,Computers & Peripherals,140,120,18,650.0,Adequate,1.17
+Monitor,Computers & Peripherals,210,150,14,160.0,Adequate,1.4
+Printer,Computers & Peripherals,85,90,21,130.0,Reorder Needed,0.94
+Phone,Mobiles & Tablets,310,200,10,420.0,Adequate,1.55
+Tablet,Mobiles & Tablets,160,140,12,280.0,Adequate,1.14
+Chair,Furniture,95,110,25,120.0,Reorder Needed,0.86
+Desk,Furniture,60,80,30,210.0,Reorder Needed,0.75
