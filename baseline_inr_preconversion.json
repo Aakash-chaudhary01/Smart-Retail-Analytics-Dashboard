@@ -1,0 +1,95 @@
+{
+  "total_row_count": 6500,
+  "kpis": {
+    "net_revenue": 5229225.1,
+    "gross_sales": 5895883.9,
+    "est_profit": 1660414.6,
+    "est_margin_pct": 31.75,
+    "total_orders": 6500,
+    "aov": 916.93,
+    "unique_customers": 2370,
+    "returning_pct": 50.84,
+    "return_rate_pct": 7.51,
+    "cancellation_rate_pct": 5.14,
+    "replacement_rate_pct": 4.44
+  },
+  "product_baseline": {
+    "Chair": {
+      "row_count": 521,
+      "avg_unit_price": 199.0,
+      "min_unit_price": 199.0,
+      "max_unit_price": 199.0,
+      "est_unit_cost": 120.0,
+      "total_quantity": 943,
+      "gross_sales": 173289.2,
+      "net_revenue": 145648.1,
+      "est_profit": 49924.1
+    },
+    "Desk": {
+      "row_count": 581,
+      "avg_unit_price": 349.0,
+      "min_unit_price": 349.0,
+      "max_unit_price": 349.0,
+      "est_unit_cost": 210.0,
+      "total_quantity": 1041,
+      "gross_sales": 333870.85,
+      "net_revenue": 279723.5,
+      "est_profit": 94976.0
+    },
+    "Laptop": {
+      "row_count": 1436,
+      "avg_unit_price": 999.0,
+      "min_unit_price": 999.0,
+      "max_unit_price": 999.0,
+      "est_unit_cost": 650.0,
+      "total_quantity": 2486,
+      "gross_sales": 2281716.0,
+      "net_revenue": 2035162.8,
+      "est_profit": 586150.3
+    },
+    "Monitor": {
+      "row_count": 966,
+      "avg_unit_price": 279.0,
+      "min_unit_price": 279.0,
+      "max_unit_price": 279.0,
+      "est_unit_cost": 160.0,
+      "total_quantity": 1671,
+      "gross_sales": 430636.5,
+      "net_revenue": 390097.8,
+      "est_profit": 146905.8
+    },
+    "Phone": {
+      "row_count": 1618,
+      "avg_unit_price": 699.0,
+      "min_unit_price": 699.0,
+      "max_unit_price": 699.0,
+      "est_unit_cost": 420.0,
+      "total_quantity": 2889,
+      "gross_sales": 1847002.65,
+      "net_revenue": 1647787.65,
+      "est_profit": 561415.65
+    },
+    "Printer": {
+      "row_count": 387,
+      "avg_unit_price": 189.0,
+      "min_unit_price": 189.0,
+      "max_unit_price": 189.0,
+      "est_unit_cost": 130.0,
+      "total_quantity": 731,
+      "gross_sales": 124730.55,
+      "net_revenue": 98119.35,
+      "est_profit": 22426.85
+    },
+    "Tablet": {
+      "row_count": 991,
+      "avg_unit_price": 449.0,
+      "min_unit_price": 449.0,
+      "max_unit_price": 449.0,
+      "est_unit_cost": 280.0,
+      "total_quantity": 1717,
+      "gross_sales": 704638.15,
+      "net_revenue": 632685.9,
+      "est_profit": 198615.9
+    }
+  }
+}

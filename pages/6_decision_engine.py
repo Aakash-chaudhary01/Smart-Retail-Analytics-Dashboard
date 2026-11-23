@@ -2,7 +2,7 @@
 pages/6_decision_engine.py
 ==========================
 Product Decision Engine Page: BCG portfolio matrix, Health Score (0-100),
-ABC inventory classification, and actionable prescriptive triggers.
+ABC inventory classification, and actionable prescriptive triggers in INR (₹).
 """
 
 from __future__ import annotations
@@ -11,13 +11,14 @@ import pandas as pd
 import plotly.express as px
 
 from config import RECOMMENDATION_COLORS
+from currency import format_inr, format_inr_compact
 from ui.theme import apply_retro_theme_to_figure
 from ui.components import render_kpi_card, render_retro_header, render_notice, render_status_badge
 
 render_retro_header(
     title="Product Decision Engine",
-    subtitle="Algorithmic lifecycle optimization, health scoring (0-100), and BCG matrix actions",
-    badge="DECISION CORE"
+    subtitle="Algorithmic lifecycle optimization, health scoring (0-100), and BCG matrix actions in INR (₹)",
+    badge="DECISION (₹)"
 )
 
 render_notice(
@@ -56,6 +57,7 @@ st.markdown("""
     <div class="retro-window-body">
 """, unsafe_allow_html=True)
 
+bcg_hover = product_decisions["net_revenue"].apply(lambda v: format_inr(v))
 bcg_fig = px.scatter(
     product_decisions,
     x="rev_share_pct",
@@ -66,15 +68,19 @@ bcg_fig = px.scatter(
     color_discrete_map=RECOMMENDATION_COLORS,
     labels={"rev_share_pct": "Revenue Contribution Share (%)", "growth_3m_pct": "3-Month Growth (%)"},
 )
+bcg_fig.update_traces(
+    customdata=bcg_hover,
+    hovertemplate="Product: %{text}<br>Rev Share: %{x:.1f}%<br>3M Growth: %{y:.1f}%<br>Net Revenue: %{customdata}<extra></extra>",
+    textposition="top center"
+)
 bcg_fig.add_hline(y=0, line_dash="dot", line_color="#888888")
 bcg_fig.add_vline(x=product_decisions["rev_share_pct"].median(), line_dash="dot", line_color="#888888")
-bcg_fig.update_traces(textposition="top center")
 apply_retro_theme_to_figure(bcg_fig, title="BCG Growth-Share Matrix with Prescriptive Overlays", height=400)
 st.plotly_chart(bcg_fig, use_container_width=True)
 st.markdown("</div></div>", unsafe_allow_html=True)
 
 # 3. Decision Table
-st.markdown("### 📋 Prescriptive Product Recommendation Table")
+st.markdown("### 📋 Prescriptive Product Recommendation Table (INR)")
 
 def highlight_recommendations(val):
     if val == "Increase Production":
@@ -88,10 +94,14 @@ def highlight_recommendations(val):
 display_cols = [
     "product", "category", "recommendation", "confidence",
     "health_score", "margin_pct", "growth_3m_pct", "forecast_growth_pct",
+    "net_revenue", "est_profit",
     "return_rate_pct", "rev_share_pct", "abc_class", "bcg_quadrant",
     "current_stock", "reorder_point", "reason"
 ]
 table_df = product_decisions[display_cols].copy()
+table_df["net_revenue"] = table_df["net_revenue"].apply(lambda v: format_inr(v))
+table_df["est_profit"] = table_df["est_profit"].apply(lambda v: format_inr(v))
+table_df = table_df.rename(columns={"net_revenue": "net_revenue (INR)", "est_profit": "est_profit (INR)"})
 
 styler = table_df.style
 if hasattr(styler, "map"):

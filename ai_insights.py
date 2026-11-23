@@ -17,6 +17,7 @@ import pandas as pd
 import streamlit as st
 from dotenv import load_dotenv
 
+from currency import format_inr
 from config import (
     DEFAULT_GEMINI_MODEL,
     FALLBACK_GEMINI_MODEL,
@@ -146,7 +147,7 @@ def generate_rule_based_fallback(product_decisions_df: pd.DataFrame, kpis: Dict[
         "*(Note: Gemini API Key is not configured or reachable. Running high-precision deterministic rules engine.)*",
         "",
         "## 1. Executive Summary",
-        f"- **Net Revenue:** ${kpis.get('net_revenue', 0.0):,.2f} | **Estimated Profit:** ${kpis.get('est_profit', 0.0):,.2f} ({kpis.get('est_margin_pct', 0.0):.1f}% margin)",
+        f"- **Net Revenue:** {format_inr(kpis.get('net_revenue', 0.0))} | **Estimated Profit:** {format_inr(kpis.get('est_profit', 0.0))} ({kpis.get('est_margin_pct', 0.0):.1f}% margin)",
         f"- **Order Health:** {kpis.get('return_rate_pct', 0.0):.1f}% Return Rate, {kpis.get('cancellation_rate_pct', 0.0):.1f}% Cancellation Rate, {kpis.get('replacement_rate_pct', 0.0):.1f}% Replacement Rate.",
         f"- **Customer Loyalty:** {kpis.get('returning_pct', 0.0):.1f}% of monthly orders come from returning buyers.",
         "",

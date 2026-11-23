@@ -163,11 +163,11 @@ def test_forecasting_pipeline(sample_sales_data):
     assert res["forecast_df"]["yhat"].iloc[0] > 0
 
 def test_utils_formatters():
-    """Verify formatting helper functions."""
+    """Verify formatting helper functions with INR currency and Indian grouping."""
     from utils import format_currency, format_percentage, format_number, format_delta_arrow
-    assert format_currency(1234.56) == "$1,234.56"
-    assert format_currency(12500.0) == "$12.5k"
-    assert format_currency(2500000.0) == "$2.50M"
+    assert format_currency(1234.56) == "₹1,234.56"
+    assert format_currency(125000.0, compact=True) == "₹1.25 Lakh"
+    assert format_currency(25000000.0, compact=True) == "₹2.50 Cr"
     assert format_percentage(15.42) == "15.4%"
     assert format_number(12500) == "12,500"
     assert "↑" in format_delta_arrow(5.2)

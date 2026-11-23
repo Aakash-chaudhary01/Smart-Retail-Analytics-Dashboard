@@ -2,7 +2,7 @@
 app.py
 ======
 Production-Quality Retail Sales Dashboard with Report Upload and AI-Powered Product Insights.
-Retro Web / Netscape-inspired aesthetic using Streamlit 1.67+ st.navigation and st.Page.
+Configured with INR (₹) base currency, Indian number formatting, and 1-time currency conversion.
 """
 
 from __future__ import annotations
@@ -18,6 +18,16 @@ import config
 from config import (
     DEFAULT_GEMINI_MODEL,
     DECISION_THRESHOLDS,
+)
+from currency import (
+    BASE_CURRENCY,
+    CURRENCY_SYMBOL,
+    USD_TO_INR_RATE,
+    detect_dataset_currency,
+    convert_dataframe_currency,
+    convert_amount,
+    format_inr,
+    format_inr_compact,
 )
 from utils import (
     format_currency,
@@ -50,7 +60,7 @@ from ui.components import render_notice
 # Streamlit App Configuration
 # ---------------------------------------------------------------------------
 st.set_page_config(
-    page_title="Retail Sales Intelligence Dashboard",
+    page_title="Retail Sales Intelligence Dashboard (INR)",
     page_icon="🛍️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -60,12 +70,12 @@ st.set_page_config(
 st.markdown(RETRO_CSS, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
-# Sidebar: Upload, Filter Slicers, and Configuration
+# Sidebar: Brand Banner & Data Source
 # ---------------------------------------------------------------------------
 st.sidebar.markdown("""
 <div style="text-align: center; margin-bottom: 1rem; border-bottom: 2px solid #222222; padding-bottom: 0.8rem;">
     <span style="font-family: 'VT323', monospace; font-size: 2.2rem; font-weight: 700; color: #2B254E;">🛍️ RETRO SALES</span><br>
-    <span class="retro-badge badge-teal">NETSCAPE EDITION</span>
+    <span class="retro-badge badge-teal">INR (₹) EDITION</span>
 </div>
 """, unsafe_allow_html=True)
 
@@ -75,12 +85,63 @@ if df_raw.empty:
     st.warning("⚠️ No sales data available. Please verify your dataset or use the default sample.")
     st.stop()
 
+# ---------------------------------------------------------------------------
+# Sidebar: Currency Detection, Selection & Exchange Rate Information
+# ---------------------------------------------------------------------------
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 💱 Currency & Exchange")
+
+detected_curr = detect_dataset_currency(df_raw)
+
+# If detected, use detected currency; otherwise let user choose via selector
+if detected_curr:
+    source_currency = detected_curr
+    st.sidebar.success(f"Detected Dataset Currency: **{source_currency}**")
+else:
+    if "source_currency" not in st.session_state:
+        st.session_state["source_currency"] = "USD"
+    source_currency = st.sidebar.selectbox(
+        "Select Dataset Currency",
+        options=["USD", "INR"],
+        index=0 if st.session_state["source_currency"] == "USD" else 1,
+        help="Specify whether raw figures are in USD or INR. Dashboard displays all metrics in INR (₹)."
+    )
+    st.session_state["source_currency"] = source_currency
+
+conversion_active = (source_currency == "USD")
+applied_rate = USD_TO_INR_RATE if conversion_active else 1.0
+
+st.sidebar.markdown(f"""
+<div style="font-size: 0.82rem; background: #FFF9E6; border: 2px solid #222; box-shadow: 2px 2px 0px #222; padding: 8px 10px; margin-bottom: 10px;">
+    <strong>Reporting Currency:</strong> INR (₹)<br>
+    <strong>Source Currency:</strong> {source_currency}<br>
+    <strong>Exchange Rate:</strong> 1 USD = ₹{USD_TO_INR_RATE:.2f}<br>
+    <strong>Status:</strong> {'Converted 1x to INR' if conversion_active else 'Native INR (No conversion)'}
+</div>
+""", unsafe_allow_html=True)
+
+# ---------------------------------------------------------------------------
+# One-Time Currency Conversion (Original df_raw kept completely unchanged)
+# ---------------------------------------------------------------------------
+st.session_state["df_raw_original"] = df_raw.copy()
+st.session_state["source_currency"] = source_currency
+st.session_state["applied_rate"] = applied_rate
+
+if conversion_active:
+    # Convert every monetary column exactly once before KPI calculations
+    df_working = convert_dataframe_currency(df_raw, from_currency="USD", to_currency="INR", rate=applied_rate)
+else:
+    df_working = df_raw.copy()
+
+# ---------------------------------------------------------------------------
+# Sidebar: Global Slicers & Filters
+# ---------------------------------------------------------------------------
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 🔍 Global Slicers & Filters")
 
 # Date range filter
-min_date = df_raw["order_date"].min().date()
-max_date = df_raw["order_date"].max().date()
+min_date = df_working["order_date"].min().date()
+max_date = df_working["order_date"].max().date()
 date_range = st.sidebar.date_input(
     "Date Range",
     value=(min_date, max_date),
@@ -94,15 +155,15 @@ else:
     start_d, end_d = min_date, max_date
 
 # Category & Product multiselects
-avail_cats = sorted(df_raw["category"].dropna().unique().tolist())
+avail_cats = sorted(df_working["category"].dropna().unique().tolist())
 selected_cats = st.sidebar.multiselect("Category", options=avail_cats, default=avail_cats)
 
 # Filter available products dynamically based on selected categories
-avail_prods = sorted(df_raw[df_raw["category"].isin(selected_cats)]["product"].dropna().unique().tolist())
+avail_prods = sorted(df_working[df_working["category"].isin(selected_cats)]["product"].dropna().unique().tolist())
 selected_prods = st.sidebar.multiselect("Product", options=avail_prods, default=avail_prods)
 
 # Channel filter
-avail_channels = sorted(df_raw["channel"].dropna().unique().tolist()) if "channel" in df_raw.columns else []
+avail_channels = sorted(df_working["channel"].dropna().unique().tolist()) if "channel" in df_working.columns else []
 selected_channels = st.sidebar.multiselect("Sales Channel", options=avail_channels, default=avail_channels) if avail_channels else []
 
 # Order Status filter
@@ -110,7 +171,7 @@ avail_statuses = ["Delivered", "Returned", "Replaced", "Cancelled"]
 selected_statuses = st.sidebar.multiselect("Order Status", options=avail_statuses, default=avail_statuses)
 
 # Region filter
-avail_regions = sorted(df_raw["region"].dropna().unique().tolist()) if "region" in df_raw.columns else []
+avail_regions = sorted(df_working["region"].dropna().unique().tolist()) if "region" in df_working.columns else []
 selected_regions = st.sidebar.multiselect("Region", options=avail_regions, default=avail_regions) if avail_regions else []
 
 # Decision Threshold Customization Sliders
@@ -145,38 +206,44 @@ user_api_key = st.sidebar.text_input(
 # Apply Global Filters to working dataset
 # ---------------------------------------------------------------------------
 mask = (
-    (df_raw["order_date"].dt.date >= start_d) &
-    (df_raw["order_date"].dt.date <= end_d) &
-    (df_raw["category"].isin(selected_cats)) &
-    (df_raw["product"].isin(selected_prods)) &
-    (df_raw["order_status"].isin(selected_statuses))
+    (df_working["order_date"].dt.date >= start_d) &
+    (df_working["order_date"].dt.date <= end_d) &
+    (df_working["category"].isin(selected_cats)) &
+    (df_working["product"].isin(selected_prods)) &
+    (df_working["order_status"].isin(selected_statuses))
 )
-if selected_channels and "channel" in df_raw.columns:
-    mask = mask & (df_raw["channel"].isin(selected_channels))
-if selected_regions and "region" in df_raw.columns:
-    mask = mask & (df_raw["region"].isin(selected_regions))
+if selected_channels and "channel" in df_working.columns:
+    mask = mask & (df_working["channel"].isin(selected_channels))
+if selected_regions and "region" in df_working.columns:
+    mask = mask & (df_working["region"].isin(selected_regions))
 
-df = df_raw[mask].copy()
+df = df_working[mask].copy()
 
 if df.empty:
     st.warning("⚠️ No data matches the selected filter combination. Please broaden your sidebar filters.")
     st.stop()
 
 # ---------------------------------------------------------------------------
-# Pre-Compute Core Aggregations & Models into Session State
+# Pre-Compute Core Aggregations & Models in INR into Session State
 # ---------------------------------------------------------------------------
-with st.spinner("Processing analytics engine..."):
+with st.spinner("Processing analytics engine in INR (₹)..."):
     st.session_state["df"] = df
     st.session_state["df_raw"] = df_raw
+    st.session_state["df_working"] = df_working
     st.session_state["dq_report"] = dq_report
     st.session_state["user_api_key"] = user_api_key
     st.session_state["user_thresholds"] = user_thresholds
     
+    # KPIs calculated in INR
     st.session_state["kpis"] = calculate_kpis(df)
     st.session_state["monthly_df"] = get_monthly_metrics(df)
     st.session_state["forecast_results"] = generate_all_forecasts(df)
     
+    # Inventory catalog with scaled unit costs
     inventory_df = pd.read_csv("data/inventory_summary.csv") if os.path.exists("data/inventory_summary.csv") else None
+    if inventory_df is not None and conversion_active:
+        if "estimated_unit_cost" in inventory_df.columns:
+            inventory_df["estimated_unit_cost"] = convert_amount(inventory_df["estimated_unit_cost"], "USD", "INR", applied_rate)
     st.session_state["inventory_df"] = inventory_df
     
     st.session_state["product_decisions"] = evaluate_product_decisions(
@@ -192,7 +259,7 @@ with st.spinner("Processing analytics engine..."):
     st.session_state["cohort_pcts"] = cohort_pcts
 
 # ---------------------------------------------------------------------------
-# Modern Page Navigation using st.navigation and st.Page
+# Navigation Pages Registration
 # ---------------------------------------------------------------------------
 pages = [
     st.Page("pages/1_overview.py", title="1. Overview & Scorecard", icon="📊", default=True),

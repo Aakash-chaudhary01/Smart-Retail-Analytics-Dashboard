@@ -33,9 +33,9 @@ def auto_detect_columns(available_columns: List[str]) -> Dict[str, Optional[str]
     for target_col, aliases in COLUMN_ALIASES.items():
         matched = None
         for alias in aliases:
-            clean_alias = alias.lower().replace(" ", "").replace("_", "")
+            clean_alias = alias.lower().replace(" ", "").replace("_", "").replace("(inr)", "").replace("(usd)", "").replace("₹", "").replace("$", "").replace("(", "").replace(")", "")
             for low_c, orig_c in lower_cols.items():
-                clean_raw = low_c.replace(" ", "").replace("_", "")
+                clean_raw = low_c.replace(" ", "").replace("_", "").replace("(inr)", "").replace("(usd)", "").replace("₹", "").replace("$", "").replace("(", "").replace(")", "")
                 if clean_raw == clean_alias:
                     matched = orig_c
                     break

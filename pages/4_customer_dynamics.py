@@ -2,7 +2,7 @@
 pages/4_customer_dynamics.py
 ============================
 Customer Dynamics & Retention Analytics Page: Cohort analysis,
-New vs Returning customer trends, RFM behavioral clustering, and CLV.
+New vs Returning customer trends, RFM behavioral clustering, and CLV in INR (₹).
 """
 
 from __future__ import annotations
@@ -11,14 +11,15 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-from utils import format_number, format_currency
+from currency import format_inr, format_inr_compact
+from utils import format_number
 from ui.theme import apply_retro_theme_to_figure, RETRO_COLORWAY
 from ui.components import render_kpi_card, render_retro_header, render_notice
 
 render_retro_header(
     title="Customer Dynamics & Retention",
-    subtitle="Cohort retention matrix, RFM segmentation, customer lifetime value, and repeat behavior",
-    badge="LINEAGE ENGINE"
+    subtitle="Cohort retention matrix, RFM segmentation, customer lifetime value, and repeat behavior in INR (₹)",
+    badge="LINEAGE (₹)"
 )
 
 df = st.session_state.get("df")
@@ -40,7 +41,7 @@ if not dq_report.get("has_customer_id", False) or df["customer_id"].dropna().emp
 st.markdown("""
 <div class="retro-window">
     <div class="retro-window-bar">
-        <span>👥 CUSTOMER_KPI_SUMMARY.DAT</span>
+        <span>👥 CUSTOMER_KPI_SUMMARY_INR.DAT</span>
         <div class="retro-window-controls"><span class="retro-window-btn btn-min"></span><span class="retro-window-btn btn-max"></span><span class="retro-window-btn btn-close"></span></div>
     </div>
     <div class="retro-window-body">
@@ -55,7 +56,7 @@ with cust_c2:
 with cust_c3:
     st.markdown(render_kpi_card("Avg Order Interval", f"{customer_stats.get('avg_days_between_orders', 0.0):.1f} days"), unsafe_allow_html=True)
 with cust_c4:
-    st.markdown(render_kpi_card("Avg Lifetime Spend", format_currency(customer_stats.get("avg_clv", 0.0))), unsafe_allow_html=True)
+    st.markdown(render_kpi_card("Avg Lifetime Spend", format_inr(customer_stats.get("avg_clv", 0.0))), unsafe_allow_html=True)
 
 st.markdown("</div></div>", unsafe_allow_html=True)
 
@@ -153,11 +154,17 @@ with freq_c2:
             total_revenue=("monetary", "sum"),
             avg_monetary=("monetary", "mean")
         ).reset_index().sort_values("total_revenue", ascending=False)
+        
+        rfm_hover = rfm_summary["total_revenue"].apply(lambda v: format_inr(v))
 
         fig_rfm = px.bar(
             rfm_summary, x="segment", y="customer_count",
             color="segment", text_auto=True,
             color_discrete_sequence=RETRO_COLORWAY
+        )
+        fig_rfm.update_traces(
+            customdata=rfm_hover,
+            hovertemplate="%{x}<br>Customers: %{y}<br>Segment Revenue: %{customdata}<extra></extra>"
         )
         apply_retro_theme_to_figure(fig_rfm, title="RFM Behavioral Cohort Size", height=320)
         fig_rfm.update_layout(showlegend=False, yaxis_title="Customer Count")
@@ -188,10 +195,12 @@ if not cohort_pcts.empty:
 st.markdown("</div></div>", unsafe_allow_html=True)
 
 # 5. Top 10 High Value Customers
-st.markdown("### 👑 Top 10 High-Value Customers by Historical Net Spend")
+st.markdown("### 👑 Top 10 High-Value Customers by Historical Net Spend (INR)")
 top_10 = customer_stats.get("top_10_customers", pd.DataFrame())
 if not top_10.empty:
+    top_10_display = top_10.copy()
+    top_10_display["total_net_spend"] = top_10_display["total_net_spend"].apply(lambda v: format_inr(v))
     st.dataframe(
-        top_10.style.format({"total_net_spend": "${:,.2f}"}),
+        top_10_display,
         use_container_width=True
     )
