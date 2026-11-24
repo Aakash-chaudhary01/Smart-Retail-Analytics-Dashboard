@@ -186,27 +186,6 @@ Access the dashboard at `http://localhost:8501`.
 
 ---
 
-## 🎓 Viva & Project Presentation Q&A
-
-### Q1: Why does Net Revenue differ from Gross Billed Sales in this project?
-> **Answer:** In commercial retail, gross billed sales represents all invoices generated. However, orders that are subsequently **Returned** or **Cancelled** do not generate retained cash. In our pipeline, $\text{Net Revenue}$ strictly includes `Delivered` and `Replaced` orders ($100\%$ value retention) while assigning $\$0.00$ to `Returned` and `Cancelled` orders. This ensures that top-line KPIs reflect real revenue rather than gross volume.
-
-### Q2: How is a "Returning Customer" mathematically defined in customer dynamics?
-> **Answer:** A customer is classified as "Returning" in calendar month $M$ if and only if their first-ever valid (non-cancelled) order occurred in a strictly earlier calendar month ($M_{0} < M$). If a customer makes multiple purchases within their very first month, all those transactions in that month are tagged as "New". This avoids misleading cohort distortion and accurately isolates true multi-period retention.
-
-### Q3: What happens if an uploaded dataset lacks an Order Status or Customer ID column?
-> **Answer:** The pipeline implements graceful degradation:
-> * If `customer_id` is missing, the customer analytics, cohort heatmap, and RFM tabs are neatly hidden with an informative banner explaining that walk-ins/anonymous transactions cannot support customer-level tracking.
-> * If `order_status` is missing, the upload UI prompts the user to either treat all orders as `Delivered` or skip status breakdown, rather than making silent arbitrary assumptions.
-
-### Q4: How does the Product Decision Engine calculate the Health Score?
-> **Answer:** The Health Score is an engineered composite metric between 0 and 100. It computes a weighted average across five key business dimensions: 3-month growth rate (30%), profit margin (30%), revenue contribution share (20%), return and replacement penalty (10%), and demand consistency / low volatility (10%). This provides a balanced rating that prevents high-volume, loss-making products from appearing healthy.
-
-### Q5: How do you guarantee the AI Insights Engine does not hallucinate business figures?
-> **Answer:** First, the AI model never receives raw tabular rows or customer PII; it receives only a pre-aggregated, tightly validated JSON payload containing computed KPIs, category totals, and decision engine scores. Second, the system prompt explicitly constrains Gemini as a business intelligence auditor: it is instructed to cite only the numbers supplied in the payload and is strictly barred from fabricating ungrounded statistics. If no API key is supplied, a deterministic rule-based engine executes instead.
-
----
-
 ## 🔮 Limitations & Future Scope
 * **Limitations:**
   * Sample dataset order statuses for Online and Retail channels are partially simulated to showcase edge cases.
